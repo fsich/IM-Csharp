@@ -1,0 +1,12 @@
+﻿<Window x:Class="IM2.FRequest"
+
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Height="154" Width="279"
+        Style="{StaticResource {x:Type Window}}">
+    <Grid Margin="0,0,2,2">
+        <Label Name="FriendRequestLabel" Content="Friend request from: " Margin="60,10,64,69"/>
+        <Button Name="CancelButton"  Content="Cancel" Margin="136,95,64,29" Click="CancelButton_Click"/>
+        <Button Name="OkButton"  Content="OK" Margin="60,95,166,29" RenderTransformOrigin="0.625,-2" Click="OkButton_Click"/>
+    </Grid>
+</Window>

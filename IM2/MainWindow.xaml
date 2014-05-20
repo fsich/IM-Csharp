@@ -1,0 +1,42 @@
+﻿<Window x:Class="IM2.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Height="243.933" Width="164.78"
+        Style="{StaticResource {x:Type Window}}" 
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        >
+    <Grid HorizontalAlignment="Left" Height="244" VerticalAlignment="Top" Width="162">
+        <Button Style="{StaticResource XButton}" 
+                HorizontalAlignment="Left" 
+                Margin="124,10,0,0" 
+                VerticalAlignment="Top" 
+                RenderTransformOrigin="0.5,0.5" 
+                >
+        </Button>
+        <Button Style="{StaticResource MButton}" Margin="93,10,43,0" VerticalAlignment="Top"/>
+        <TextBox Style="{StaticResource UserNameTb}" HorizontalAlignment="Left" Height="23"
+                 Margin="10,40,0,0" TextWrapping="Wrap"
+                 VerticalAlignment="Top"
+                 Width="142"
+                 Name="_UsernameTextBox"/>
+
+        <TextBox Style="{StaticResource PasswordTb}" HorizontalAlignment="Left" 
+                 Height="23" Margin="10,82,0,0" TextWrapping="Wrap" 
+                 VerticalAlignment="Top" Width="142"
+                 Name="_PasswordTextBox"
+                 />
+        <Button Style="{StaticResource RoundButtonTemplate}" Content="Login" 
+                HorizontalAlignment="Left" Height="30" Margin="10,120,0,0" 
+                VerticalAlignment="Top" Width="142"
+                Name="LoginButton" Click="LoginButton_Click"/>
+        <Button Style="{StaticResource RoundButtonTemplate}" Content="Register" 
+                HorizontalAlignment="Left" Height="35" Margin="10,155,0,0"
+                VerticalAlignment="Top" Width="142"
+                Name="RegisterButton" Click="RegisterButton_OnClick"/>
+        <Label Name="_ErrorLabel"  Style="{StaticResource Label}"
+               HorizontalAlignment="Left" Height="21" 
+               Margin="20,199,0,-11" VerticalAlignment="Top" Width="129"/>
+    </Grid>
+</Window>

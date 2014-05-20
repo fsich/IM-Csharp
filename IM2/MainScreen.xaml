@@ -1,0 +1,17 @@
+﻿<Window x:Class="IM2.MainScreen"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MainScreen" Height="389" Width="254"
+        Style="{StaticResource {x:Type Window}}"
+        >
+    <Grid HorizontalAlignment="Left" Height="389" Margin="0,0,0,-8" VerticalAlignment="Top" Width="244">
+        <Button Style="{StaticResource XButton}" HorizontalAlignment="Left" Margin="209,0,0,0" VerticalAlignment="Top" Width="25"/>
+        <Button Style="{StaticResource MButton}" HorizontalAlignment="Left" Height="22" Margin="179,3,0,0" VerticalAlignment="Top" Width="25"/>
+        <ListBox Name="Friendlist" Style="{StaticResource ListBox}" MouseDoubleClick="Friendlist_OnMouseDoubleClick" HorizontalAlignment="Left" Height="235" Margin="10,35,0,0" VerticalAlignment="Top" Width="224"/>
+        <Label Name="_ErrorLabel"  Style="{StaticResource Label}"
+               HorizontalAlignment="Left" Height="21" 
+               Margin="10,345,0,0" VerticalAlignment="Top" Width="224" />
+        <TextBox Name="FriendRequestBox" Margin="10,295,94,69"/>
+        <Button Name="FriendRequestButton" Margin="155,295,10,69" Content="Send Request" Click="FriendRequestButton_Click"/>
+    </Grid>
+</Window>
