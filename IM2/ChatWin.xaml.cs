@@ -1,5 +1,7 @@
-﻿using System.Windows;
+﻿using System.Net.Mime;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace IM2
 {
@@ -8,9 +10,12 @@ namespace IM2
     /// </summary>
     public partial class ChatWin : Window
     {
-        public ChatWin()
+        private readonly string with;
+        public ChatWin(string with)
         {
+            this.with = with;
             InitializeComponent();
+            NameLabel.Content += with;
         }
 
         public Label GetTitleLabel()
@@ -31,11 +36,22 @@ namespace IM2
         private void onChatWinClose(object sender, RoutedEventArgs e)
         {
             App.LocalClient.ActiveWins.Remove(this);
+            Close();
+            e.Handled = true;
+            
         }
 
         private void SendEvent(object sender, RoutedEventArgs e)
         {
-            App.LocalClient.SendMsg(Title,GetSendBox().Text);
+            App.LocalClient.SendMsg(with,GetSendBox().Text);
+            SendBox.Text = "";
+        }
+
+        private void SendBox_OnKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.Enter) return;
+            App.LocalClient.SendMsg(with, GetSendBox().Text);
+            SendBox.Text = "";
         }
     }
 }

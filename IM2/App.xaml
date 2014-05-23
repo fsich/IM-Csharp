@@ -55,7 +55,7 @@
             </Style>
             
             <Style x:Key="Label" TargetType="Label">
-                <Setter Property="Foreground" Value="{StaticResource BlackForeground}"/>
+                <Setter Property="Foreground" Value="{StaticResource WhiteForeground}"/>
                 <Setter Property="FontSize" Value="10"/>
                 <Setter Property="HorizontalAlignment" Value="Center"/>
                 <Setter Property="VerticalAlignment" Value="Center"/>

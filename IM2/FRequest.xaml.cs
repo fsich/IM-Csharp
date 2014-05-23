@@ -21,6 +21,7 @@ namespace IM2
     /// </summary>
     public partial class FRequest : Window
     {
+        private string request;
         public FRequest()
         {
             InitializeComponent();
@@ -29,6 +30,7 @@ namespace IM2
         public FRequest(string request) : this()
         {
             GetLabel().Content += request;
+            this.request = request;
         }
 
         public Label GetLabel()
@@ -38,10 +40,8 @@ namespace IM2
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            string a = FriendRequestLabel.ContentStringFormat;
-            App.LocalClient.AcceptFriend(a.Split(':')[1]);
+            App.LocalClient.AcceptFriend(request);
             Close();
-            
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)

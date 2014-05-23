@@ -27,12 +27,11 @@ namespace IM2
         public const byte UpdateFriendList = 10;
         public const byte FriendRequest = 11;
         public const byte FriendRequestAccepted = 12;
+
         public const int MaxUsernameLength = 32;
         public const int MaxPasswordLength = 32;
-        
 
         private bool isConnected, mode = false;
-        private List<string> friendList = new List<string>();
         private BinaryReader reader;
         private BinaryWriter writer;
         private NetworkStream stream;
@@ -44,7 +43,13 @@ namespace IM2
 
         public List<ChatWin> ActiveWins = new List<ChatWin>();  
         public Label ErrorLabel { get; set; }
+   
         private MainWindow loginWin;
+
+        private const string TOOLONG_PW = "Password is too long.";
+        private const string TOOLONG_UN = "Password is too long.";
+        private const string USERNAME_EXISTS = "Username exists.";
+        private const string BAD_P_U = "Wrong username or password.";
         public void LogIn(string username, string pass, bool mode, Label l, MainWindow win)
         {
             ErrorLabel = l;
@@ -57,25 +62,31 @@ namespace IM2
                 this.mode = mode;
                 this.currentMainWin = win;
                 ErrorLabel = win.GetErrorLabel();
-                thread  = new Thread(new ThreadStart(ClientStart));
+
+                Dispatcher dispatcher = Dispatcher.CurrentDispatcher;
+                thread = new Thread(() => ClientStart(dispatcher));
                 thread.SetApartmentState(ApartmentState.STA);
                 thread.Start();
             }
         }
 
-        private void ChangeAsyncErrorContent(string msg)
+        private void PrintError(string msg)
         {
-            ErrorLabel.Dispatcher.Invoke(new Action(() => { ErrorLabel.Content = msg; })); 
+            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                ErrorLabel.Content = msg;
+            })); 
         }
 
-        private void ClientStart()
+        private void ClientStart(Dispatcher uiDispatcher)
         {
             tcpClient = new TcpClient("localhost",3000);
             isConnected = true;
             stream = tcpClient.GetStream();
+            
             reader = new BinaryReader(stream, Encoding.UTF8);
             writer = new BinaryWriter(stream, Encoding.UTF8);
-            byte response = Exists;
+            byte response;
             while (isConnected) {
                 byte packet = reader.ReadByte();
                 switch (packet)
@@ -97,35 +108,40 @@ namespace IM2
                                     currentMainWin = win;
                                     ErrorLabel = win.GetErrorLabel();
                                     win.Show();
+                                    win.UpdateLayout();
                                     loginWin.Close();
                                     SyncFriendList();
                                 }));
                                     
                                 break;
                             case TooLongPassword:
-                                ChangeAsyncErrorContent("Password is too long.");
+                                PrintError(TOOLONG_PW);
                                 break; 
                             case TooLongUsername:
-                                ChangeAsyncErrorContent("Username is too long.");
+                                PrintError(TOOLONG_UN);
                                 break;
                             case Exists:
-                                ChangeAsyncErrorContent("Username exists.");
+                                PrintError(USERNAME_EXISTS);
                                 break;
                             case InvalidPassOrName:
-                                ChangeAsyncErrorContent("Wrong username or password.");
+                                PrintError(BAD_P_U);
                                 break;
                         }
                         break;
-                    //[from][msg]
                     case Send:
                         string from = reader.ReadString();
                         string msg = reader.ReadString();
-                        RcvMessage(from,msg);
+                        RcvMessage(from, msg, uiDispatcher);
                         break;
                     case FriendRequest:
                         string request = reader.ReadString();
-                        FRequest fRequest = new FRequest(request);
-                        fRequest.Show();
+                        Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
+                        {
+                            //Nové okno se musí vytvořit z ui vlákna
+                            FRequest fRequest = new FRequest(request);
+                            fRequest.Show();
+                        }));
+
                         break;
                     case FriendRequestAccepted:
                         SyncFriendList();
@@ -169,26 +185,37 @@ namespace IM2
         writer.Flush();
     }
 
-    public void RcvMessage(string from, string msg){
-        foreach (var c in ActiveWins)
+    public void RcvMessage(string from, string msg, Dispatcher uiDispatcher)
+    {
+        //nutné požít dispatcher, protože objekt je v jiném vlákně
+        Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
         {
-            if (c.Title.ToLower().Equals(from.ToLower()))
+            foreach (var c in ActiveWins)
             {
-                PrintMessage(c,msg);
-                return;
+                if (c.GetTitleLabel().Content.ToString().ToLower().Equals(from.ToLower()))
+                {
+                    PrintMessage(c, msg);
+                    c.Show();
+                    return;
+                }
             }
+            ChatWin win = new ChatWin(from);
+            win.Show();
+            win.GetTitleLabel().Content = from;
+            ActiveWins.Add(win);
+            PrintMessage(win, msg);
         }
+            ));
 
-        ChatWin win = new ChatWin();
-        win.Title = from;
-        ActiveWins.Add(win);
-        PrintMessage(win,msg);
     }
-
     private void PrintMessage(ChatWin w, string msg)
     {
-        DateTime dt = DateTime.Now;
-        w.GetMessageBox().AppendText(String.Format("{0:d/M/yyyy HH:mm:ss}", dt)+" "+w.Title+": "+msg+"\n\r");
+      DateTime dt = DateTime.Now;
+      Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
+           w.GetMessageBox()
+                .AppendText(String.Format("{0:d/M/yyyy HH:mm:ss}", dt) + " " + w.GetTitleLabel().Content + ": " + msg)));
+
+
     }
 
 

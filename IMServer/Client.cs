@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading;
@@ -24,6 +25,16 @@ namespace IMServer
         public const int MaxUsernameLength = 32;
         public const int MaxPasswordLength = 32;
 
+        public const string IS_OFFLINE = "User is offline.";
+        public const string CLIENT_REGISTERED = "Client {0} was registered.";
+        public const string CLIENT_ACCESS = "Client is trying to connect to the server.";
+        public const string CLIENT_CONNECTED = "Client {0} connected.";
+        public const string CLIENT_DISCONNECTED = "Client {0} disconnected.";
+        public const string UPDATING_FRIENDLIST = "Updating friendlist for client: {0}.";
+        public const string FRIEND_REQUEST = "Client {0} sent friendrequest to {1}.";
+        public const string ACCEPTED_FRIEND_REQUEST = "Client {0} accepted friendrequest from {1}.";
+        public const string MESSAGE_SENT = " {0} > {1} : {3}";
+
         private Server instance;
         private BinaryReader reader;
         private BinaryWriter writer;
@@ -44,7 +55,7 @@ namespace IMServer
 
         private void StartClient()
         {
-            Console.WriteLine("Client se pokousi pripojit na server.");
+            Console.WriteLine(CLIENT_ACCESS);
             stream = Client.GetStream();
 
             reader = new BinaryReader(stream);
@@ -81,7 +92,7 @@ namespace IMServer
                             return;
                         }
                         instance.CreateNewUser(username, password);
-                        Console.WriteLine("Novy uzivatel byl registrovan.");
+                        Server.Logger.Log(Logger.Level.ClientCommunication,CLIENT_REGISTERED.Replace("{0}",username));
                         writer.Write(OK);
                         writer.Flush();
                     }
@@ -100,7 +111,7 @@ namespace IMServer
                     Name = username;
                     ID = instance.GetId(Name);
                     instance.AddOnlineClient(Name, this);
-                    Console.WriteLine("Uzivatel " + Name + " pripojen.");
+                    Console.WriteLine(CLIENT_CONNECTED, Name);
                 }
                
                 while (Connected)
@@ -114,14 +125,19 @@ namespace IMServer
                             string to = reader.ReadString();
                             string msg = reader.ReadString();
                             if (!instance.IsClientOnline(to))
-                                break;
+                            {
+                                writer.Write(Send);
+                                writer.Write(from);
+                                writer.Write(IS_OFFLINE);
+                            break;
+                            }
                             if (!instance.CanMessage(from, to))
                                 break;
                             ImClient client = instance.GetClient(to);
-                            client.BinaryWriter.Write(Send);
-                            client.BinaryWriter.Write(from);
-                            client.BinaryWriter.Write(msg);
-                            Console.WriteLine(from + " > " + to + " > " + msg);
+                            client.writer.Write(Send);
+                            client.writer.Write(from);
+                            client.writer.Write(msg);
+                            Server.Logger.Log(Logger.Level.ClientCommunication, MESSAGE_SENT.Replace("{1}",from).Replace("{2}", to).Replace("{3}",msg));
                             client.BinaryWriter.Flush();
                             break;
                         case Disconnect:
@@ -130,23 +146,26 @@ namespace IMServer
                             writer.Close();
                             reader.Close();
                             instance.RemoveOnlineUser(Name);
-                            Console.WriteLine("Uzivatel "+ Name+" se odpojil.");
+                            Server.Logger.Log(Logger.Level.ClientCommunication, CLIENT_DISCONNECTED.Replace("{0}",Name));
                             break;
                         case UpdateFriendList:
                             writer.Write(instance.GetFriendList(Name));
+                            Server.Logger.Log(Logger.Level.ClientCommunication, UPDATING_FRIENDLIST.Replace("{0}", Name));
                             break;
                         case FriendRequest:
                             string user = reader.ReadString();
                             if (!instance.IsClientOnline(user))
                                 return;
                             ImClient c = instance.GetClient(user);
-                            instance.AddFriend(Name, reader.ReadString());
-                            c.BinaryWriter.Write(FriendRequest);
-                            c.BinaryWriter.Write(Name);
-                            c.BinaryWriter.Flush();
+                            Server.Logger.Log(Logger.Level.ClientCommunication, FRIEND_REQUEST.Replace("{0}", Name).Replace("{1}", user));
+                            instance.AddFriend(Name, user);
+                            c.writer.Write(FriendRequest);
+                            c.writer.Write(Name);
+                            c.writer.Flush();
                             break;
                         case FriendRequestAccepted:
                             string s = reader.ReadString();
+                            Server.Logger.Log(Logger.Level.ClientCommunication, ACCEPTED_FRIEND_REQUEST.Replace("{0}", Name).Replace("{1}", s));
                             instance.AddFriend(s,Name);
                             break;
                     }

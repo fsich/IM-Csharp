@@ -13,7 +13,8 @@ namespace IMServer
         private MySqlConnection con;
         private TcpListener tcpListener;
         private Thread listenThread;
-        private Dictionary<string, ImClient> ConnectedClients = new Dictionary<string, ImClient>(); 
+        private Dictionary<string, ImClient> ConnectedClients = new Dictionary<string, ImClient>(StringComparer.InvariantCultureIgnoreCase);
+        public static Logger Logger= new Logger(); 
         public Server()
         {
             CreateDBConnection();
@@ -24,6 +25,7 @@ namespace IMServer
             Console.ReadLine();
         }
 
+        //pripoji se do db a vytvoří pottřebné tabulky
         private void CreateDBConnection()
         {
             MySqlConnectionStringBuilder conn_string = new MySqlConnectionStringBuilder();
@@ -46,8 +48,9 @@ namespace IMServer
                 cmd.ExecuteNonQuery();
 
                 querry = "CREATE TABLE IF NOT EXISTS `friendlist` (" +
-                         "id int NOT NULL," +
+                         "id int NOT NULL AUTO_INCREMENT," +
                          "name VARCHAR(32) NOT NULL," +
+                         "user_id int NOT NULL,"+
                          "PRIMARY KEY (id, name)" +
                          ");";
 
@@ -59,14 +62,14 @@ namespace IMServer
             }
             catch (MySqlException e)
             {
-                Console.WriteLine("Error: " + e.Message);
+                Logger.Log(Logger.Level.MySQLWarning, e.Message);
             }
         }
 
+        //zkontroluje zda uzivatel jiz v databazi je
         public bool UserExists(string username)
         {
             try {
-
                 string querry = "SELECT count(*) FROM `clients` WHERE name=@name";
                 MySqlCommand cmd = new MySqlCommand(querry, con);
                 cmd.CommandType = CommandType.Text;
@@ -76,18 +79,17 @@ namespace IMServer
                 {
                     return false;
                 }
-                else
-                {
-                    return true;
-                }
+                return true;
+                
             }
             catch (MySqlException e)
             {
-                Console.WriteLine("Error: " + e.Message);
+                Logger.Log(Logger.Level.MySQLWarning, e.Message);
                 return false;
             }
         }
 
+        //zkontroluje zda je shoda ve jméně a hesle
         public bool PasswordAndUserMatches(string username, string pass)
         {
             try {
@@ -108,11 +110,12 @@ namespace IMServer
             }
             catch (MySqlException e)
             {
-                Console.WriteLine("Error: " + e.Message);
+                Logger.Log(Logger.Level.MySQLWarning, e.Message);
                 return false;
             }
         } 
 
+        //vytvorí nového uživatele v databázi
         public void CreateNewUser(string username, string pass)
         {
             try {
@@ -124,50 +127,53 @@ namespace IMServer
             }
             catch (MySqlException e)
             {
-                Console.WriteLine("Error: " + e.Message);
+                Logger.Log(Logger.Level.MySQLWarning, e.Message);
             }
         }    
 
+        //vrátí řetězec který obsahuje jména přátel z databáze 
         public string GetFriendList(string user){
             try
-            { 
-                String qry = "SELECT * FROM `friendlist` WHERE id = @id ";
+            {
+                String qry =
+                    "SELECT friendlist.name from clients,friendlist WHERE clients.id = friendlist.user_id AND clients.id = @id";
                 MySqlCommand cmd = new MySqlCommand(qry, con);
                 cmd.CommandType = CommandType.Text;
                 cmd.Parameters.AddWithValue("@id", GetId(user));
                 MySqlDataReader rdr = cmd.ExecuteReader();
-                string fr = "";
-                while (rdr.NextResult())
+                string l = "";
+                while (rdr.Read())
                 {
-                    fr += rdr.Read();
+                    l+= rdr.GetString("name");
                 }
                 rdr.Close();
-                return fr;
+                return l;
             }
             catch (MySqlException e)
             {
-                Console.WriteLine("Error: " + e.Message);
-                return " ";
+                Logger.Log(Logger.Level.MySQLWarning, e.Message);
+                return "";
             }
         }   
 
+        
         public void AddFriend(string user, string f)
         {
             try {
-                string l = GetFriendList(user);
-                l += " " + f;
-                string querry = "INSERT INTO `friendlist` (id,list) VALUES (@id, @list)";
+                string querry = "INSERT INTO friendlist (name,user_id) VALUES (@name,@userid)";
                 MySqlCommand cmd = new MySqlCommand(querry, con);
                 cmd.CommandType = CommandType.Text;
-                cmd.Parameters.AddWithValue("@id", GetId(user));
-                cmd.Parameters.AddWithValue("@list", l);
+                cmd.Parameters.AddWithValue("@user_id", GetId(user));
+                cmd.Parameters.AddWithValue("@name", f);
                 cmd.ExecuteNonQuery();
             }
             catch (MySqlException e)
             {
-                Console.WriteLine("Error: " + e.Message);
+                Logger.Log(Logger.Level.MySQLWarning, e.Message);
             }
         } 
+
+        //
         public bool CanMessage(string from, string to)
         {
             string a = GetFriendList(from);
@@ -191,14 +197,14 @@ namespace IMServer
             }
             catch (MySqlException e)
             {
-                Console.WriteLine("Error: " + e.Message);
+                Logger.Log(Logger.Level.MySQLWarning, e.Message);
                 return -1;
             }
         } 
 
         public bool IsClientOnline(string username)
         {
-            return ConnectedClients.ContainsKey(username.ToLower());
+            return ConnectedClients.ContainsKey(username);
         } 
 
         public void AddOnlineClient(string username, ImClient client){

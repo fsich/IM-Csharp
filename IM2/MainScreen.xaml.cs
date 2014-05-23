@@ -31,21 +31,13 @@ namespace IM2
         }
         public void setErrorContent(string con)
         {
-            Thread thread = new System.Threading.Thread(new ThreadStart(
-                delegate()
-                {
-                    GetErrorLabel().Dispatcher.Invoke(
-                      System.Windows.Threading.DispatcherPriority.SystemIdle,
-                      TimeSpan.FromSeconds(1),
-                      new Action(
+            _ErrorLabel.Dispatcher.Invoke(new Action(
                         delegate()
                         {
                             GetErrorLabel().Content=con;
                         }
                     ));
-                }
-            ));
-            thread.Start();
+  
         }
 
 
@@ -67,8 +59,9 @@ namespace IM2
             {
                 if ( elem is ListBoxItem )
                 {
-                    string selectedItem = ((ListBoxItem)elem).Name;
-                    ChatWin w = new ChatWin();
+                    //string selectedItem = ((ListBoxItem)elem).Name;
+                    string selectedItem = Friendlist.SelectedItem.ToString();
+                    ChatWin w = new ChatWin(selectedItem);
                     w.GetTitleLabel().Content = selectedItem;
                     w.Show();
                     
