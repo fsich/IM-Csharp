@@ -10,7 +10,8 @@
         <ListBox Name="Friendlist" Style="{StaticResource ListBox}" MouseDoubleClick="Friendlist_OnMouseDoubleClick" HorizontalAlignment="Left" Height="235" Margin="10,35,0,0" VerticalAlignment="Top" Width="224"/>
         <Label Name="_ErrorLabel"  Style="{StaticResource Label}"
                HorizontalAlignment="Left" Height="21" 
-               Margin="10,345,0,0" VerticalAlignment="Top" Width="224" />
+               Margin="10,345,0,0" VerticalAlignment="Top" Width="224" 
+               />
         <TextBox Name="FriendRequestBox" Margin="10,295,94,69"/>
         <Button Name="FriendRequestButton" Margin="155,295,10,69" Content="Send Request" Click="FriendRequestButton_Click"/>
     </Grid>

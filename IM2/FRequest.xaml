@@ -5,8 +5,8 @@
         Height="179" Width="279"
         Style="{StaticResource {x:Type Window}}">
     <Grid Margin="0,0,-8,2">
-        <Label Style="{StaticResource {x:Type Label}}" Name="FriendRequestLabel" Content="Friend request from: " Margin="60,10,64,79"/>
-        <Button Name="CancelButton"  Content="Cancel" Margin="136,95,64,29" Click="CancelButton_Click"/>
-        <Button Name="OkButton"  Content="OK" Margin="60,95,166,29" RenderTransformOrigin="0.625,-2" Click="OkButton_Click"/>
+        <Label Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" Name="FriendRequestLabel" Content="Friend request from: " Margin="60,10,64,79"/>
+        <Button Name="CancelButton"  Content="Cancel" Margin="135,80,81,44" Click="CancelButton_Click"/>
+        <Button Name="OkButton"  Content="Accept" Margin="77,80,149,44" RenderTransformOrigin="0.625,-2" Click="OkButton_Click"/>
     </Grid>
 </Window>

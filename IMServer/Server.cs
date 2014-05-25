@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Net;
@@ -13,7 +14,7 @@ namespace IMServer
         private MySqlConnection con;
         private TcpListener tcpListener;
         private Thread listenThread;
-        private Dictionary<string, ImClient> ConnectedClients = new Dictionary<string, ImClient>(StringComparer.InvariantCultureIgnoreCase);
+        private ConcurrentDictionary<string, ImClient> ConnectedClients = new ConcurrentDictionary<string, ImClient>(StringComparer.InvariantCultureIgnoreCase);
         public static Logger Logger= new Logger(); 
         public Server()
         {
@@ -173,7 +174,7 @@ namespace IMServer
             }
         } 
 
-        //
+        //správa se může poslat, pouze pokud uživatel from a to jsou ve vzájemných friendlistech
         public bool CanMessage(string from, string to)
         {
             string a = GetFriendList(from);
@@ -181,6 +182,7 @@ namespace IMServer
             return a.Contains(to) && b.Contains(from);
         } 
 
+        //vrátí id uživatele z databáze
         public int GetId(string name) {
             try
             { 
@@ -202,11 +204,13 @@ namespace IMServer
             }
         } 
 
+        //zkontroluje zda je klient online
         public bool IsClientOnline(string username)
         {
             return ConnectedClients.ContainsKey(username);
         } 
 
+        
         public void AddOnlineClient(string username, ImClient client){
             if (!IsClientOnline(username))
                 ConnectedClients.Add(username,client);
@@ -217,6 +221,7 @@ namespace IMServer
             ConnectedClients.Remove(username);
         }
 
+        //methoda, která čeká na nové spojení
         private void ListenForClients()
         {
             while (true)

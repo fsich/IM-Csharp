@@ -49,16 +49,5 @@ namespace IM2
             LocalClient localClient = App.LocalClient = new LocalClient();
             localClient.LogIn(_UsernameTextBox.Text, _PasswordTextBox.Text, true, _ErrorLabel, this);
         }
-
-        private void MainWindow_OnKeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key != Key.Enter) return;
-
-            // your event handler here
-            e.Handled = true;
-            _ErrorLabel.Content = "Enter pressed";
-        }
-
-
     }
 }

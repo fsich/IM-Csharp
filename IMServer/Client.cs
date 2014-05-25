@@ -8,6 +8,7 @@ namespace IMServer
 {
     internal class ImClient
     {
+        //druhy paketů
         public const byte ClientConnect = 100;
         public const byte OK = 0;
         public const byte Login = 1;
@@ -26,6 +27,7 @@ namespace IMServer
         public const int MaxPasswordLength = 32;
 
         public const string IS_OFFLINE = "User is offline.";
+        public const string CANT_MESSAGE = "You can't send message to this user.";
         public const string CLIENT_REGISTERED = "Client {0} was registered.";
         public const string CLIENT_ACCESS = "Client is trying to connect to the server.";
         public const string CLIENT_CONNECTED = "Client {0} connected.";
@@ -47,6 +49,7 @@ namespace IMServer
             this.Client = client;
             this.instance = instance;
         }
+        //vytvoří se nové vlákno, které bude číst a odesílat data po streamu
         public void Start()
         {
             Thread t = new Thread(new ThreadStart(StartClient));
@@ -67,7 +70,6 @@ namespace IMServer
                 byte response = reader.ReadByte(); //ceka na odpoveď
                 if (response == ClientConnect) //client se pokousi pripojit
                 {
-                    //[string username][string pass][boolean register]
                     string username = reader.ReadString();
                     if (username.Length > MaxUsernameLength)
                     {
@@ -119,7 +121,6 @@ namespace IMServer
                     byte packet = reader.ReadByte();
                     switch (packet)
                     {
-                            //[from][to][msg]
                         case Send:
                             string from = Name;
                             string to = reader.ReadString();
@@ -128,11 +129,17 @@ namespace IMServer
                             {
                                 writer.Write(Send);
                                 writer.Write(from);
-                                writer.Write(IS_OFFLINE);
-                            break;
+                                writer.Write(IS_OFFLINE); //posle zprávu o tom, že uživatel je offline
+                                break;
                             }
                             if (!instance.CanMessage(from, to))
+                            {
+                                writer.Write(Send);
+                                writer.Write(from);
+                                writer.Write(CANT_MESSAGE); //posle zprávu o tom, že uživatel není ve friendlistu druhého
                                 break;
+                            }
+                                
                             ImClient client = instance.GetClient(to);
                             client.writer.Write(Send);
                             client.writer.Write(from);

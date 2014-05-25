@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -41,7 +42,7 @@ namespace IM2
         public string Name { get; set; }
         public string Pass { get; set; }
 
-        public List<ChatWin> ActiveWins = new List<ChatWin>();  
+        public ConcurrentBag<ChatWin> ActiveWins = new ConcurrentBag<ChatWin>();  //thread-save collection
         public Label ErrorLabel { get; set; }
    
         private MainWindow loginWin;
@@ -62,9 +63,7 @@ namespace IM2
                 this.mode = mode;
                 this.currentMainWin = win;
                 ErrorLabel = win.GetErrorLabel();
-
-                Dispatcher dispatcher = Dispatcher.CurrentDispatcher;
-                thread = new Thread(() => ClientStart(dispatcher));
+                thread = new Thread(new ThreadStart(ClientStart));
                 thread.SetApartmentState(ApartmentState.STA);
                 thread.Start();
             }
@@ -78,7 +77,7 @@ namespace IM2
             })); 
         }
 
-        private void ClientStart(Dispatcher uiDispatcher)
+        private void ClientStart()
         {
             tcpClient = new TcpClient("localhost",3000);
             isConnected = true;
@@ -131,7 +130,7 @@ namespace IM2
                     case Send:
                         string from = reader.ReadString();
                         string msg = reader.ReadString();
-                        RcvMessage(from, msg, uiDispatcher);
+                        RcvMessage(from, msg);
                         break;
                     case FriendRequest:
                         string request = reader.ReadString();
@@ -183,9 +182,10 @@ namespace IM2
         writer.Write(to);
         writer.Write(msg);
         writer.Flush();
+        RcvMessage(Name,msg); //zobrazi odeslanou zpravu sám sobě
     }
 
-    public void RcvMessage(string from, string msg, Dispatcher uiDispatcher)
+    public void RcvMessage(string from, string msg)
     {
         //nutné požít dispatcher, protože objekt je v jiném vlákně
         Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
@@ -195,7 +195,6 @@ namespace IM2
                 if (c.GetTitleLabel().Content.ToString().ToLower().Equals(from.ToLower()))
                 {
                     PrintMessage(c, msg);
-                    c.Show();
                     return;
                 }
             }
@@ -213,7 +212,7 @@ namespace IM2
       DateTime dt = DateTime.Now;
       Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
            w.GetMessageBox()
-                .AppendText(String.Format("{0:d/M/yyyy HH:mm:ss}", dt) + " " + w.GetTitleLabel().Content + ": " + msg)));
+                .AppendText(String.Format("{0:d/M/yyyy HH:mm:ss}", dt) + " " + w.GetTitleLabel().Content + ": " + msg+"\n")));
 
 
     }
