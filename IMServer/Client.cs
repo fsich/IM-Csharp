@@ -145,7 +145,7 @@ namespace IMServer
                             ImClient client = instance.GetClient(to);
                             client.writer.Write(Send);
                             client.writer.Write(from);
-                            client.writer.Write(msg);
+                            client.writer.Write(msg); //odesle zpravu
                             Server.Logger.Log(Logger.Level.ClientCommunication, MESSAGE_SENT.Replace("{0}",from).Replace("{1}", to).Replace("{2}",msg));
                             client.BinaryWriter.Flush();
                             break;
