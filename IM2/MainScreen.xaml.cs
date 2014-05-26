@@ -60,8 +60,8 @@ namespace IM2
                 if ( elem is ListBoxItem )
                 {
                     //string selectedItem = ((ListBoxItem)elem).Name;
-                    string selectedItem = Friendlist.SelectedItem.ToString();
-                    ChatWin w = new ChatWin(selectedItem);
+                    string selectedItem = Friendlist.SelectedItem.ToString(); //vybere nakliknutou položku
+                    ChatWin w = new ChatWin(selectedItem); //a vytvoří okno 
                     w.GetTitleLabel().Content = selectedItem;
                     w.Show();
                     
