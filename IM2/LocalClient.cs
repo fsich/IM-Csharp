@@ -28,6 +28,7 @@ namespace IM2
         public const byte UpdateFriendList = 10;
         public const byte FriendRequest = 11;
         public const byte FriendRequestAccepted = 12;
+        public const byte FriendRemove = 13;
 
         public const int MaxUsernameLength = 32;
         public const int MaxPasswordLength = 32;
@@ -42,7 +43,7 @@ namespace IM2
         public string Name { get; set; }
         public string Pass { get; set; }
 
-        public ConcurrentBag<ChatWin> ActiveWins = new ConcurrentBag<ChatWin>();  //thread-save collection
+        public ConcurrentDictionary<ChatWin,Int32> ActiveWins = new ConcurrentDictionary<ChatWin,Int32>();  //thread-save collection
         public Label ErrorLabel { get; set; }
    
         private MainWindow loginWin;
@@ -55,6 +56,7 @@ namespace IM2
         {
             ErrorLabel = l;
             this.loginWin = win;
+            
             if (!isConnected)
             {
                 isConnected = true;
@@ -66,6 +68,7 @@ namespace IM2
                 thread = new Thread(new ThreadStart(ClientStart));
                 thread.SetApartmentState(ApartmentState.STA);
                 thread.Start();
+
             }
         }
 
@@ -86,8 +89,17 @@ namespace IM2
             reader = new BinaryReader(stream, Encoding.UTF8);
             writer = new BinaryWriter(stream, Encoding.UTF8);
             byte response;
-            while (isConnected) {
-                byte packet = reader.ReadByte();
+            while (isConnected)
+            {
+                byte packet;
+                try {
+                    packet = reader.ReadByte();
+                } catch(EndOfStreamException e) //pokud se klient odpojil
+                {
+                    thread.Abort();
+                    isConnected = false;
+                    return;
+                }
                 switch (packet)
                 {
                     case ClientConnect:
@@ -182,7 +194,6 @@ namespace IM2
         writer.Write(to);
         writer.Write(msg);
         writer.Flush();
-        RcvMessage(Name,msg); //zobrazi odeslanou zpravu sám sobě
     }
 
     public void RcvMessage(string from, string msg)
@@ -192,27 +203,27 @@ namespace IM2
         {
             foreach (var c in ActiveWins)
             {
-                if (c.GetTitleLabel().Content.ToString().ToLower().Equals(from.ToLower()))
+                if (c.Key.GetTitleLabel().Content.ToString().ToLower().Equals(from.ToLower()))
                 {
-                    PrintMessage(c, msg);
+                    PrintMessage(c.Key, msg,from);
                     return;
                 }
             }
             ChatWin win = new ChatWin(from);
             win.Show();
             win.GetTitleLabel().Content = from;
-            ActiveWins.Add(win);
-            PrintMessage(win, msg);
+            ActiveWins.TryAdd(win,0);
+            PrintMessage(win, msg,from);
         }
             ));
 
     }
-    private void PrintMessage(ChatWin w, string msg)
+    public void PrintMessage(ChatWin w, string msg,string from)
     {
       DateTime dt = DateTime.Now;
       Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
            w.GetMessageBox()
-                .AppendText(String.Format("{0:d/M/yyyy HH:mm:ss}", dt) + " " + w.GetTitleLabel().Content + ": " + msg+"\n")));
+                .AppendText(Environment.NewLine+String.Format("{0:d/M/yyyy HH:mm:ss}", dt) + " " + from + ": " + msg)));
 
 
     }
@@ -222,6 +233,13 @@ namespace IM2
     {
          writer.Write(Disconnect_);
          writer.Flush();
+    }
+
+    public void RemoveFriend(string name)
+    {
+        writer.Write(FriendRemove);
+        writer.Write(name);
+        writer.Flush();
     }
     }
 }

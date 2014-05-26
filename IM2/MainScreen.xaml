@@ -12,7 +12,9 @@
                HorizontalAlignment="Left" Height="21" 
                Margin="10,345,0,0" VerticalAlignment="Top" Width="224" 
                />
-        <TextBox Name="FriendRequestBox" Margin="10,295,94,69"/>
-        <Button Name="FriendRequestButton" Margin="155,295,10,69" Content="Send Request" Click="FriendRequestButton_Click"/>
+        <TextBox Name="FriendRequestBox" Margin="10,275,94,89"/>
+        <Button Name="FriendRequestButton" Margin="155,275,10,89" Content="Add friend" Click="FriendRequestButton_Click"/>
+        <TextBox x:Name="RemoveFriendBox" Margin="10,305,94,59"/>
+        <Button x:Name="RemoveFriendButton" Margin="155,305,10,59" Content="Remove friend" Click="FriendRemoveButton_Click"/>
     </Grid>
 </Window>

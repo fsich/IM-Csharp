@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -58,7 +58,7 @@ namespace IMServer
                 cmd = new MySqlCommand(querry, con);
                 cmd.Prepare();
                 cmd.ExecuteNonQuery();
-                Console.WriteLine("Pripojeno k databazi.");
+                Logger.Log(Logger.Level.MySQLWarning, "Connected to db.");
                 //con.Close();
             }
             catch (MySqlException e)
@@ -172,7 +172,24 @@ namespace IMServer
             {
                 Logger.Log(Logger.Level.MySQLWarning, e.Message);
             }
-        } 
+        }
+
+        public void RemoveFriend(string removed, string name)
+        {
+            try
+            {
+                string querry = "DELETE FROM friendlist WHERE name=@name AND user_id=@userid";
+                MySqlCommand cmd = new MySqlCommand(querry, con);
+                cmd.CommandType = CommandType.Text;
+                cmd.Parameters.AddWithValue("@user_id", GetId(name));
+                cmd.Parameters.AddWithValue("@name", removed);
+                cmd.ExecuteNonQuery();
+            }
+            catch (MySqlException e)
+            {
+                Logger.Log(Logger.Level.MySQLWarning, e.Message);
+            }
+        }
 
         //správa se může poslat, pouze pokud uživatel from a to jsou ve vzájemných friendlistech
         public bool CanMessage(string from, string to)
@@ -213,12 +230,13 @@ namespace IMServer
         
         public void AddOnlineClient(string username, ImClient client){
             if (!IsClientOnline(username))
-                ConnectedClients.Add(username,client);
+                ConnectedClients.TryAdd(username,client);
         }
 
         public void RemoveOnlineUser(string username)
         {
-            ConnectedClients.Remove(username);
+            ImClient client;
+            ConnectedClients.TryRemove(username,out client);
         }
 
         //methoda, která čeká na nové spojení
@@ -227,8 +245,12 @@ namespace IMServer
             while (true)
             {
                 TcpClient client = tcpListener.AcceptTcpClient();
-                ImClient c = new ImClient(client, this);
-                c.Start();
+                try {
+                      ImClient c = new ImClient(client, this);
+                      c.Start();
+                } catch(EndOfStreamException ex){
+                    Logger.Log(Logger.Level.Warning, ex.ToString());
+                }
             }
         }
 
@@ -253,5 +275,7 @@ namespace IMServer
             ConnectedClients.TryGetValue(to, out c);
             return c;
         }
+
+
     }
 }

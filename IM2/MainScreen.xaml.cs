@@ -65,7 +65,7 @@ namespace IM2
                     w.GetTitleLabel().Content = selectedItem;
                     w.Show();
                     
-                    App.LocalClient.ActiveWins.Add(w);
+                    App.LocalClient.ActiveWins.TryAdd(w,0);
                     return;
                 }
                 elem = (UIElement)VisualTreeHelper.GetParent( elem );
@@ -76,8 +76,15 @@ namespace IM2
         {
             string a = FriendRequestBox.Text;
             if (a.Equals(""))
-                GetErrorLabel().Content = "You have to specify name";
+                return;
             App.LocalClient.SendFriendRequest(a);
+            FriendRequestBox.Text = "";
+        }
+
+        private void FriendRemoveButton_Click(object sender, RoutedEventArgs e)
+        {
+            App.LocalClient.RemoveFriend(RemoveFriendBox.Text);
+            RemoveFriendBox.Text = "";
         }
     }
 }

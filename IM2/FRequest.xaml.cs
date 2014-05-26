@@ -13,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace IM2
 {
@@ -40,13 +41,20 @@ namespace IM2
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            App.LocalClient.AcceptFriend(request);
-            Close();
+            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
+             {
+                App.LocalClient.AcceptFriend(request);
+                Close();
+             }));
+
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            Close();
+            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
+            {
+                Close();
+            }));
         }
     }
 }

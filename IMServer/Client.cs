@@ -25,6 +25,7 @@ namespace IMServer
         public const byte FriendRequestAccepted = 12;
         public const int MaxUsernameLength = 32;
         public const int MaxPasswordLength = 32;
+        public const byte FriendRemove = 13;
 
         public const string IS_OFFLINE = "User is offline.";
         public const string CANT_MESSAGE = "You can't send message to this user.";
@@ -35,7 +36,8 @@ namespace IMServer
         public const string UPDATING_FRIENDLIST = "Updating friendlist for client: {0}.";
         public const string FRIEND_REQUEST = "Client {0} sent friendrequest to {1}.";
         public const string ACCEPTED_FRIEND_REQUEST = "Client {0} accepted friendrequest from {1}.";
-        public const string MESSAGE_SENT = " {0} > {1} : {3}";
+        public const string MESSAGE_SENT = " {0} > {1} : {2}";
+        public const string FRIEND_REMOVED = "{0} removed {1} from friendlist.";
 
         private Server instance;
         private BinaryReader reader;
@@ -144,7 +146,7 @@ namespace IMServer
                             client.writer.Write(Send);
                             client.writer.Write(from);
                             client.writer.Write(msg);
-                            Server.Logger.Log(Logger.Level.ClientCommunication, MESSAGE_SENT.Replace("{1}",from).Replace("{2}", to).Replace("{3}",msg));
+                            Server.Logger.Log(Logger.Level.ClientCommunication, MESSAGE_SENT.Replace("{0}",from).Replace("{1}", to).Replace("{2}",msg));
                             client.BinaryWriter.Flush();
                             break;
                         case Disconnect:
@@ -174,6 +176,11 @@ namespace IMServer
                             string s = reader.ReadString();
                             Server.Logger.Log(Logger.Level.ClientCommunication, ACCEPTED_FRIEND_REQUEST.Replace("{0}", Name).Replace("{1}", s));
                             instance.AddFriend(s,Name);
+                            break;
+                        case FriendRemove:
+                            string removed = reader.ReadString();
+                            instance.RemoveFriend(removed, Name);
+                            Server.Logger.Log(Logger.Level.ClientCommunication, FRIEND_REMOVED.Replace("{0}", Name).Replace("{1}", removed));
                             break;
                     }
                 }
