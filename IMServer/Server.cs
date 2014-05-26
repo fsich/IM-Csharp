@@ -268,7 +268,7 @@ namespace IMServer
         {
             get { return listenThread; }
         }
-
+        //vrátí připojeného klienta
         public ImClient GetClient(string to)
         {
             ImClient c;
