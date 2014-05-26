@@ -74,6 +74,7 @@ namespace IM2
 
         private void PrintError(string msg)
         {
+            //přístup k ui vláknu
             Application.Current.Dispatcher.BeginInvoke(new Action(() =>
             {
                 ErrorLabel.Content = msg;
@@ -112,7 +113,7 @@ namespace IM2
                         switch (response)
                         {
                             case OK:
-
+                                //vytvoí instanci nového okna z ui vlákna
                                 currentMainWin.Dispatcher.Invoke(new Action(() =>
                                 {
                                     MainScreen win = new MainScreen();
@@ -146,9 +147,10 @@ namespace IM2
                         break;
                     case FriendRequest:
                         string request = reader.ReadString();
+                        //přístup k ui vláknu
                         Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
                         {
-                            //Nové okno se musí vytvořit z ui vlákna
+ 
                             FRequest fRequest = new FRequest(request);
                             fRequest.Show();
                         }));
@@ -160,7 +162,7 @@ namespace IM2
                 }
             }     
         }
-
+    //synchronizuje lokalni friendlist s databazí
     public void SyncFriendList()
     {
         if (currentMainWin == null) return;
@@ -174,7 +176,7 @@ namespace IM2
                     ((MainScreen)currentMainWin).GetFriendlist().Items.Add(ff[i]);
         }
     }
-
+    //prida pritele do fl
     public void AcceptFriend(string from)
     {
         writer.Write(FriendRequestAccepted);
@@ -182,20 +184,20 @@ namespace IM2
         writer.Flush();
         SyncFriendList();
     }
-
+    //posle friend req
     public void SendFriendRequest(string to){
         writer.Write(FriendRequest);
         writer.Write(to);
         writer.Flush();
     }
-
+    //odesle zrávu
     public void SendMsg(string to, string msg){
         writer.Write(Send);
         writer.Write(to);
         writer.Write(msg);
         writer.Flush();
     }
-
+    //zobrazi zpravu do patřicneho okna
     public void RcvMessage(string from, string msg)
     {
         //nutné požít dispatcher, protože objekt je v jiném vlákně
@@ -218,6 +220,7 @@ namespace IM2
             ));
 
     }
+    //zobrazi zpravu a zformatuje text
     public void PrintMessage(ChatWin w, string msg,string from)
     {
       DateTime dt = DateTime.Now;
@@ -234,7 +237,6 @@ namespace IM2
          writer.Write(Disconnect_);
          writer.Flush();
     }
-
     public void RemoveFriend(string name)
     {
         writer.Write(FriendRemove);
