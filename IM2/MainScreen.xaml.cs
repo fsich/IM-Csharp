@@ -59,13 +59,12 @@ namespace IM2
             {
                 if ( elem is ListBoxItem )
                 {
-                    //string selectedItem = ((ListBoxItem)elem).Name;
-                    string selectedItem = Friendlist.SelectedItem.ToString(); //vybere nakliknutou položku
-                    ChatWin w = new ChatWin(selectedItem); //a vytvoří okno 
+                    string selectedItem = Friendlist.SelectedItem.ToString();
+                    ChatWin w = new ChatWin(selectedItem);
                     w.GetTitleLabel().Content = selectedItem;
                     w.Show();
                     
-                    App.LocalClient.ActiveWins.TryAdd(w,0);
+                    App.LocalClient.ActiveWins.Add(w);
                     return;
                 }
                 elem = (UIElement)VisualTreeHelper.GetParent( elem );

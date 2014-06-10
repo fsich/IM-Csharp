@@ -41,20 +41,13 @@ namespace IM2
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
-             {
-                App.LocalClient.AcceptFriend(request);
-                Close();
-             }));
-
+           App.LocalClient.AcceptFriend(request);
+            Close();
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
-            {
-                Close();
-            }));
+            Close();
         }
     }
 }

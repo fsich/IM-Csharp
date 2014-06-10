@@ -3,7 +3,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Height="179" Width="279"
-        Style="{StaticResource {x:Type Window}}">
+        Style="{StaticResource {x:Type Window}}"
+        WindowStartupLocation="CenterScreen">
     <Grid Margin="0,0,-8,2">
         <Label Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" Name="FriendRequestLabel" Content="Friend request from: " Margin="60,10,64,79"/>
         <Button Name="CancelButton"  Content="Cancel" Margin="135,80,81,44" Click="CancelButton_Click"/>

@@ -145,7 +145,8 @@ namespace IMServer
                 string l = "";
                 while (rdr.Read())
                 {
-                    l+= rdr.GetString("name");
+                    l += rdr.GetString("name");
+                    l += ";";
                 }
                 rdr.Close();
                 return l;
@@ -164,7 +165,7 @@ namespace IMServer
                 string querry = "INSERT INTO friendlist (name,user_id) VALUES (@name,@userid)";
                 MySqlCommand cmd = new MySqlCommand(querry, con);
                 cmd.CommandType = CommandType.Text;
-                cmd.Parameters.AddWithValue("@user_id", GetId(user));
+                cmd.Parameters.AddWithValue("@userid", GetId(user));
                 cmd.Parameters.AddWithValue("@name", f);
                 cmd.ExecuteNonQuery();
             }
@@ -181,7 +182,7 @@ namespace IMServer
                 string querry = "DELETE FROM friendlist WHERE name=@name AND user_id=@userid";
                 MySqlCommand cmd = new MySqlCommand(querry, con);
                 cmd.CommandType = CommandType.Text;
-                cmd.Parameters.AddWithValue("@user_id", GetId(name));
+                cmd.Parameters.AddWithValue("@userid", GetId(name));
                 cmd.Parameters.AddWithValue("@name", removed);
                 cmd.ExecuteNonQuery();
             }
@@ -191,7 +192,7 @@ namespace IMServer
             }
         }
 
-        //správa se může poslat, pouze pokud uživatel from a to jsou ve vzájemných friendlistech
+        //správa se může poslat, pouze pokud uživatel "from" a "to" jsou ve vzájemných friendlistech
         public bool CanMessage(string from, string to)
         {
             string a = GetFriendList(from);
@@ -268,7 +269,7 @@ namespace IMServer
         {
             get { return listenThread; }
         }
-        //vrátí připojeného klienta
+
         public ImClient GetClient(string to)
         {
             ImClient c;

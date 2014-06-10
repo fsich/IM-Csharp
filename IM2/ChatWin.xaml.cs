@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Mime;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -36,8 +37,7 @@ namespace IM2
 
         private void onChatWinClose(object sender, RoutedEventArgs e)
         {
-            Int32 i;
-            App.LocalClient.ActiveWins.TryRemove(this,out i);
+            App.LocalClient.ActiveWins.Remove(this);
             Close();
             e.Handled = true;
             

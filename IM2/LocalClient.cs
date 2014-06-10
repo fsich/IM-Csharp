@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -43,7 +46,9 @@ namespace IM2
         public string Name { get; set; }
         public string Pass { get; set; }
 
-        public ConcurrentDictionary<ChatWin,Int32> ActiveWins = new ConcurrentDictionary<ChatWin,Int32>();  //thread-save collection
+        public List<ChatWin> ActiveWins = new List<ChatWin>(); 
+        public static Object Lock = new object();
+
         public Label ErrorLabel { get; set; }
    
         private MainWindow loginWin;
@@ -74,7 +79,6 @@ namespace IM2
 
         private void PrintError(string msg)
         {
-            //přístup k ui vláknu
             Application.Current.Dispatcher.BeginInvoke(new Action(() =>
             {
                 ErrorLabel.Content = msg;
@@ -113,7 +117,7 @@ namespace IM2
                         switch (response)
                         {
                             case OK:
-                                //vytvoí instanci nového okna z ui vlákna
+
                                 currentMainWin.Dispatcher.Invoke(new Action(() =>
                                 {
                                     MainScreen win = new MainScreen();
@@ -147,10 +151,9 @@ namespace IM2
                         break;
                     case FriendRequest:
                         string request = reader.ReadString();
-                        //přístup k ui vláknu
                         Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
                         {
- 
+                            //Nové okno se musí vytvořit z ui vlákna
                             FRequest fRequest = new FRequest(request);
                             fRequest.Show();
                         }));
@@ -162,42 +165,45 @@ namespace IM2
                 }
             }     
         }
-    //synchronizuje lokalni friendlist s databazí
+
     public void SyncFriendList()
     {
         if (currentMainWin == null) return;
-        if (currentMainWin is MainScreen){
+        if (currentMainWin is MainScreen)
+        {
             writer.Write(UpdateFriendList);
             writer.Flush();
             string f = reader.ReadString();
-            string[] ff = f.Split();
+            string[] ff = f.Split(';');
             for (int i = 0; i <= ff.Length - 1; i++)
                 if (!((MainScreen)currentMainWin).GetFriendlist().Items.Contains(ff[i]))
                     ((MainScreen)currentMainWin).GetFriendlist().Items.Add(ff[i]);
         }
     }
-    //prida pritele do fl
+
     public void AcceptFriend(string from)
     {
         writer.Write(FriendRequestAccepted);
         writer.Write(from);
         writer.Flush();
-        SyncFriendList();
+        ((MainScreen)currentMainWin).GetFriendlist().Items.Add(from);
     }
-    //posle friend req
+
     public void SendFriendRequest(string to){
         writer.Write(FriendRequest);
         writer.Write(to);
         writer.Flush();
+        ((MainScreen)currentMainWin).GetFriendlist().Items.Add(to);
     }
-    //odesle zrávu
+
     public void SendMsg(string to, string msg){
         writer.Write(Send);
         writer.Write(to);
         writer.Write(msg);
         writer.Flush();
     }
-    //zobrazi zpravu do patřicneho okna
+
+
     public void RcvMessage(string from, string msg)
     {
         //nutné požít dispatcher, protože objekt je v jiném vlákně
@@ -205,22 +211,21 @@ namespace IM2
         {
             foreach (var c in ActiveWins)
             {
-                if (c.Key.GetTitleLabel().Content.ToString().ToLower().Equals(from.ToLower()))
+                if (c.GetTitleLabel().Content.ToString().ToLower().Equals(from.ToLower()))
                 {
-                    PrintMessage(c.Key, msg,from);
+                    PrintMessage(c, msg,from);
                     return;
                 }
             }
             ChatWin win = new ChatWin(from);
             win.Show();
             win.GetTitleLabel().Content = from;
-            ActiveWins.TryAdd(win,0);
+            ActiveWins.Add(win);
             PrintMessage(win, msg,from);
         }
             ));
 
     }
-    //zobrazi zpravu a zformatuje text
     public void PrintMessage(ChatWin w, string msg,string from)
     {
       DateTime dt = DateTime.Now;
@@ -237,11 +242,13 @@ namespace IM2
          writer.Write(Disconnect_);
          writer.Flush();
     }
+
     public void RemoveFriend(string name)
     {
         writer.Write(FriendRemove);
         writer.Write(name);
         writer.Flush();
+        ((MainScreen)currentMainWin).GetFriendlist().Items.Remove(name);
     }
     }
 }

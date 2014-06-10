@@ -43,7 +43,7 @@ namespace IMServer
         private BinaryReader reader;
         private BinaryWriter writer;
         private NetworkStream stream;
-        private bool Connected = false;
+        private bool Connected;
         private TcpClient Client;
 
         public ImClient(TcpClient client, Server instance)
@@ -60,7 +60,7 @@ namespace IMServer
 
         private void StartClient()
         {
-            Console.WriteLine(CLIENT_ACCESS);
+            Server.Logger.Log(Logger.Level.ClientCommunication,CLIENT_ACCESS);
             stream = Client.GetStream();
 
             reader = new BinaryReader(stream);
@@ -68,8 +68,18 @@ namespace IMServer
 
             writer.Write(ClientConnect); // prvni packet co se posle, zazada o jmeno a heslo
             writer.Flush(); //vycisti buffer
-            while(!Connected){
-                byte response = reader.ReadByte(); //ceka na odpoveď
+            while(!Connected)
+            {
+                byte response;
+                try
+                {
+                    response = reader.ReadByte(); //ceka na odpoveď
+                }
+                catch (ObjectDisposedException e)
+                {
+                    Connected = false;
+                    return;
+                }
                 if (response == ClientConnect) //client se pokousi pripojit
                 {
                     string username = reader.ReadString();
@@ -115,7 +125,7 @@ namespace IMServer
                     Name = username;
                     ID = instance.GetId(Name);
                     instance.AddOnlineClient(Name, this);
-                    Console.WriteLine(CLIENT_CONNECTED, Name);
+                    Server.Logger.Log(Logger.Level.ClientCommunication,CLIENT_CONNECTED.Replace("{0}",Name));
                 }
                
                 while (Connected)
@@ -145,7 +155,7 @@ namespace IMServer
                             ImClient client = instance.GetClient(to);
                             client.writer.Write(Send);
                             client.writer.Write(from);
-                            client.writer.Write(msg); //odesle zpravu
+                            client.writer.Write(msg);
                             Server.Logger.Log(Logger.Level.ClientCommunication, MESSAGE_SENT.Replace("{0}",from).Replace("{1}", to).Replace("{2}",msg));
                             client.BinaryWriter.Flush();
                             break;
